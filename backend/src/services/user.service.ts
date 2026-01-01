@@ -117,7 +117,7 @@ export const updateUser = async ({
 
     //If user doesn't exist or there is some sort of issue with their account and rowCount for that user in the db is 0
     // insert the user instead of returning an error message indicating that the user doesn't exist
-    if(updatedUser.rowCount == 0){
+    if(updatedUser.rowCount === 0){
         const insertQuery = `INSERT INTO "users"(id, role_id, name, email, password, dob, address, is_active, is_verified, updated_at)
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
         RETURNING id`;
