@@ -125,6 +125,10 @@ export const updateUser = async ({
         updatedUser = await client.query(insertQuery, params);
     }
 
+    if(updatedUser.rows.length === 0){
+        throw new Error('Failed to insert or update user')
+    }
+
     return updatedUser.rows[0];
 
 }
