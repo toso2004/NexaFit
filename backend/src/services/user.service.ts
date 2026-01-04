@@ -9,7 +9,11 @@ import { generateAccessToken } from '../utils/token.util';
 import { RoleName, TokenTableName } from '../models/enums/auth.enum';
 import { generateTokenTable } from './auth.service';
 
-
+/**
+ * Create user
+ * @param param0 
+ * @returns 
+ */
 export const createUser = async ({
     user,
     assignRole 
@@ -74,6 +78,11 @@ export const createUser = async ({
     }     
 };
 
+/**
+ * Update user information
+ * @param param0 
+ * @returns 
+ */
 export const updateUser = async ({
     user,
     client
@@ -118,7 +127,8 @@ export const updateUser = async ({
     //If user doesn't exist or there is some sort of issue with their account and rowCount for that user in the db is 0
     // insert the user instead of returning an error message indicating that the user doesn't exist
     if(updatedUser.rowCount === 0){
-        const insertQuery = `INSERT INTO "users"(id, role_id, name, email, password, dob, address, is_active, is_verified, updated_at)
+        const insertQuery = `INSERT INTO 
+        "users"(id, role_id, name, email, password, dob, address, is_active, is_verified, updated_at)
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
         RETURNING id`;
 
@@ -133,6 +143,45 @@ export const updateUser = async ({
 
 }
 
+/**
+ * Soft delete a user
+ * @param param0 
+ * @returns 
+ */
+export const deleteUser = async ({
+    user
+}:{
+    user: userInterface.User
+})=> {
+    
+    try{
+        const deleteQuery = `UPDATE "user" 
+        SET is_active = False 
+        WHERE id = $1 AND is_active = True
+        RETURNING id`;
+
+        const params = [user.id];
+
+        const result = await DBUtil.query(deleteQuery, params);
+
+        if(result.length === 0){
+            return null
+        }
+
+        return {
+            user: user.id,
+            message: 'User deleted successfully'
+        }
+    }catch(error){
+        throw new Error(getErrorMessage(error));
+    }  
+}
+
+/**
+ * Gets the name of the role as a string to be applied when assigning a new/promoted user a role
+ * @param roleName 
+ * @returns 
+ */
 export const getRoleName = async (
     roleName: string
 ): Promise<userInterface.Role> =>{
