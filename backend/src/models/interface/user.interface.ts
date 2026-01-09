@@ -13,9 +13,18 @@ export interface User extends BaseUser{
     password: string;
     dob: string;
     address: string;
-    image_path?: string;
     is_active?: boolean;
-    is_verified?: boolean;
+    is_verified?: boolean
+}
+
+export interface CreateUserInput{
+    name: string;
+    email: string;
+    password: string;
+    dob: string;
+    address: string;
+    is_active?: boolean;
+    is_verified?: boolean
 }
 
 export interface Role{

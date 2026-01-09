@@ -4,8 +4,6 @@ import { PoolClient } from 'pg';
 import { getErrorMessage } from '../utils/error.util';
 import bycrpt from 'bcrypt'
 import { sendEmailVerification } from '../utils/email.util';
-import { error } from 'node:console';
-import { generateAccessToken } from '../utils/token.util';
 import { RoleName, TokenTableName } from '../models/enums/auth.enum';
 import { generateTokenTable } from './auth.service';
 
@@ -18,7 +16,7 @@ export const createUser = async ({
     user,
     assignRole 
 }:{
-    user: userInterface.User,
+    user: userInterface.CreateUserInput,
     assignRole: RoleName
 }) =>{
     let client: PoolClient | undefined;
@@ -84,11 +82,9 @@ export const createUser = async ({
  * @returns 
  */
 export const updateUser = async ({
-    user,
-    client
+    user
 }:{
-    user: userInterface.User,
-    client: PoolClient
+    user: userInterface.User
 }) =>{
     
     const hashedPassword = await bycrpt.hash(user.password, 10);
@@ -122,24 +118,24 @@ export const updateUser = async ({
         user.updated_at
     ]
 
-    let updatedUser = await client.query(SqlQuery, params);
+    let updatedUser = await DBUtil.query(SqlQuery, params);
 
     //If user doesn't exist or there is some sort of issue with their account and rowCount for that user in the db is 0
     // insert the user instead of returning an error message indicating that the user doesn't exist
-    if(updatedUser.rowCount === 0){
+    /*if(updatedUser.rowCount === 0){
         const insertQuery = `INSERT INTO 
         "users"(id, role_id, name, email, password, dob, address, is_active, is_verified, updated_at)
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
         RETURNING id`;
 
         updatedUser = await client.query(insertQuery, params);
+    }*/
+
+    if(!updatedUser || updatedUser.length === 0){
+        throw new Error('User not found or update failed')
     }
 
-    if(updatedUser.rows.length === 0){
-        throw new Error('Failed to insert or update user')
-    }
-
-    return updatedUser.rows[0];
+    return updatedUser[0];
 
 }
 

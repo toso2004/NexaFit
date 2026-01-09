@@ -1,0 +1,64 @@
+import * as userInterface from '../models/interface/user.interface';
+import { Request, Response } from 'express';
+import * as UserService from '../services/user.service';
+import * as HttpUtil from '../utils/http.util';
+import { RoleName } from '../models/enums/auth.enum';
+
+
+export const createUserController = async (req: Request, res: Response): Promise<void> => {
+
+    try{
+        const {name, email, password, dob, address} = req.body;
+
+        if(!name || !email || !password || !dob || !address){
+            HttpUtil.badRequest(res, 'User credientials are missing');
+            return;
+        }
+
+        const user: userInterface.CreateUserInput = {
+            name,
+            email,
+            password,
+            dob,
+            address
+        }
+
+        const createUser = await UserService.createUser({
+            user,
+            assignRole: RoleName.CUSTOMER
+        })
+
+        HttpUtil.sendCreated(res, createUser);
+
+    }catch(error: any){
+        HttpUtil.sendInternalError(res, error.message)
+    }
+};
+
+export const updateUserController = async (req: Request, res: Response): Promise<void> =>{
+    try{
+        const {role_id, name, email, password, dob, address, is_active, is_verified} = req.body;
+        const id = req.params.id
+
+        const user: userInterface.User = {
+            id: Number(id),
+            role_id: role_id || 3,
+            name,
+            email,
+            password,
+            dob,
+            address,
+            is_active: is_active || true,
+            is_verified: is_verified || false,
+            created_at: '',
+            updated_at: ''
+        }
+
+        const updateUser = await UserService.updateUser({user});
+
+        HttpUtil.sendSuccess(res, updateUser);
+
+    }catch(error: any){
+        HttpUtil.sendInternalError(res, error.message)
+    }
+}
