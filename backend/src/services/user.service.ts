@@ -8,8 +8,6 @@ import { RoleName, TokenTableName } from '../models/enums/auth.enum';
 import { generateTokenTable, storeRefreshToken } from './auth.service';
 import { CreateUser } from '../models/types/omit.type';
 
-
-
 export const createUser = async ({
   user,
   assignRole
@@ -28,18 +26,18 @@ export const createUser = async ({
 
     const role = await getRoleByName(assignRole);
 
-    const result = await create_user({user, role, client});
+    const results = await create_user({user, role, client});
 
     const { accessToken, refreshToken } = await storeRefreshToken({
-      user: result,
+      user: results,
       client
     });
 
     await DBUtil.commitTransaction(client);
 
     return{
-      userId: result.id,
-      email: result.email,
+      userId: results.id,
+      email: results.email,
       accessToken,
       refreshToken
     }
@@ -64,8 +62,8 @@ export const create_user = async ({
 
   // Insert new user
   const userQuery = `
-    INSERT INTO user 
-      (role_id, name, email, password, dob, address, is_active, is_verified, last_updated_date)
+    INSERT INTO users 
+      (role_id, name, email, password, dob, address, is_active, is_verified, updated_at)
     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
     RETURNING *;
   `;
@@ -81,10 +79,10 @@ export const create_user = async ({
     false,
   ];
 
-  const rows = await DBUtil.query(userQuery, params, client);
+  const results = await DBUtil.query(userQuery, params, client);
 
   const verificationToken = await generateTokenTable({
-    userId: rows[0].id,
+    userId: results[0].id,
     client,
     tableName: TokenTableName.EMAIL
   });
@@ -94,7 +92,7 @@ export const create_user = async ({
     token: verificationToken
   })
 
-  return rows[0] as UserInterface.User;
+  return results[0] as UserInterface.User;
 };
 
 /**
@@ -111,7 +109,7 @@ export const updateUser = async ({
     const hashedPassword = await bcrypt.hash(user.password, 10);
 
     //If the user exists update the user
-    const SqlQuery = `UPDATE user 
+    const SqlQuery = `UPDATE users 
     SET
         name = $2,
         email = $3,
@@ -143,7 +141,7 @@ export const updateUser = async ({
     // insert the user instead of returning an error message indicating that the user doesn't exist
     if(updatedUser.length === 0){
         const insertQuery = `INSERT INTO 
-        user(id, role_id, name, email, password, dob, address, is_active, is_verified, updated_at)
+        users(id, role_id, name, email, password, dob, address, is_active, is_verified, updated_at)
         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
         RETURNING id`;
 
@@ -162,7 +160,7 @@ export const updateUser = async ({
 export const deleteUserById = async (user_id: Number )=> {
     
     try{
-        const deleteQuery = `UPDATE user 
+        const deleteQuery = `UPDATE users 
         SET is_active = False 
         WHERE id = $1 AND is_active = True
         RETURNING id`;
@@ -192,7 +190,7 @@ export const deleteUserById = async (user_id: Number )=> {
 export const getRoleByName = async (
     roleName: string
 ): Promise<UserInterface.Role> =>{
-    const findRole = 'SELECT * from role WHERE name ILIKE = $1';
+    const findRole = 'SELECT * FROM role WHERE name ILIKE $1';
 
     const value = `%${roleName}%`;
 
@@ -204,13 +202,13 @@ export const getRoleByName = async (
 }
 
 const getUserByEmail = async (email: string)=> {
-  const sqlQuery = `SELECT * FROM user WHERE email ILIKE $1`;
+  const sqlQuery = `SELECT * FROM users WHERE email ILIKE $1`;
 
-  const result = (
+  const results = (
     await DBUtil.query(sqlQuery, [email])
   )[0] as unknown as UserInterface.User;
 
-  return result;
+  return results;
 };
 
 

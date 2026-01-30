@@ -57,8 +57,8 @@ const getJWTPayloadFromDb = async ({
 
     const result = await query(`
         SELECT u.id, u.email, r.id as role_id, r.name as role
-            FROM "user" u
-            INNER JOIN "role" r
+            FROM users u
+            INNER JOIN role r
             ON u.role_id = r.id
         WHERE u.id = $1
         `,[userId],client);

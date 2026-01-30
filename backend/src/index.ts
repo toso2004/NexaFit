@@ -1,11 +1,24 @@
 import express from 'express';
 import * as UserRouter from './routes/user.routes';
+import { openPool } from './utils/db.util';
+import { logger } from "./utils/logger.util";
 
-const app = express();
-app.use(express.json());
+const startServer = async () => {
+  const app = express();
+  app.use(express.json());
 
-app.use('/', UserRouter.router);
+  // Constants
+  const PORT = process.env.PORT || 3003;
 
-setInterval(() => {}, 1 << 30);
+  app.use('/', UserRouter.router);
 
-app.listen(3003, () => console.log("Server started on port 3003"));
+  // Listening
+  app.listen(PORT, async () => {
+    logger.info(`Listening in PORT: ${PORT}`);
+
+    await openPool();
+  });
+};
+
+// Initialize
+startServer();

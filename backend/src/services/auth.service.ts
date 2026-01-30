@@ -9,7 +9,7 @@ import { sendForgotPasswordEmail } from "../utils/email.util";
 
 
 export const refreshAccessToken = async (refreshToken: string) =>{
-    const checkToken = await DBUtil.query("SELECT * from auth_token WHERE token = $1 AND is_active = TRUE AND expire_at > NOW()", 
+    const checkToken = await DBUtil.query("SELECT * from auth_token WHERE token = $1 AND is_active = TRUE AND expires_at > NOW()", 
         [refreshToken]);
 
     const token = checkToken[0];
@@ -23,7 +23,7 @@ export const refreshAccessToken = async (refreshToken: string) =>{
 }
 
 export const revokeToken = async (refreshToken: string) => {
-    const checkToken = await DBUtil.query("SELECT * from auth_token WHERE token = $1 AND is_active = TRUE AND expire_at > NOW()",
+    const checkToken = await DBUtil.query("SELECT * from auth_token WHERE token = $1 AND is_active = TRUE AND expires_at > NOW()",
         [refreshToken]
     );
 
@@ -53,29 +53,37 @@ export const storeRefreshToken = async ({
     });
     
     const refreshToken = TokenUtil.generateRefreshToken();
-    const expires_date = new Date(Date.now() * 7 * 24 * 60 * 1000);
+    const duration = 7 * 24 * 60 * 60 * 1000; // 7 days
+    const expires_date = new Date(Date.now() + duration);
+
+    console.log(expires_date)
 
     await DBUtil.query(
-        `INSERT INTO auth_token(user_id, token, is_active, expire_at)
-        VALUES($1, $2, $3, $4) RETURNING *`,
+        `INSERT INTO auth_token(user_id, token, is_active, expires_at)
+        VALUES($1, $2, $3, $4) RETURNING *;`,
     [user.id, refreshToken, true, expires_date], client);
+
     
     return {accessToken, refreshToken};    
-}
+} 
 
-export const generateTokenTable = async (tokenTable: TokenTable): Promise<string> => {
-    const token = crypto.randomBytes(64).toString('hex');
-    const duration = tokenTable.durationMs ?? 24 * 60 * 60 * 1000;
-    const expiresAt = new Date(Date.now() + duration);
+export const generateTokenTable = async (
+  tokenTable: TokenTable
+): Promise<string> => {
+  const token = crypto.randomBytes(32).toString("hex");
+  const duration = tokenTable.durationMs ?? 24 * 60 * 60 * 1000; // 24 hours
+  const expiresAt = new Date(Date.now() + duration);
 
-    const result = await DBUtil.query(`
-        INSERT into ${tokenTable.tableName} (user_id, token, is_active, expires_at)
-        VALUES($1, $2, $3, $4) RETURNING *`,
-    [tokenTable.userId, token, true, expiresAt], tokenTable.client);
+  const result = await DBUtil.query(
+    `INSERT INTO ${tokenTable.tableName} (user_id, token, is_active, expires_at) VALUES ($1, $2, $3, $4) RETURNING *;`,
+    [tokenTable.userId, token, true, expiresAt],
+    tokenTable.client
+  );
 
-    return result[0].token;
-}
+  return result[0].token;
+};
 
+generateTokenTable
 export const verifyEmailToken = async (token: string) =>{
     const client = await DBUtil.startTransaction();
     try{

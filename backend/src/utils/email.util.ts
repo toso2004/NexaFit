@@ -26,7 +26,7 @@ export const sendEmailVerification = async ({
     const verificationURL = `${process.env.UI_URL}/verify-email?token=${token}`;
 
     await transporter.sendMail({
-      from: "dreamkitchenstores@gmail.com",
+      from: "nexafit@gmail.com",
       to: email,
       subject: "Email verification",
       html: emailVerificationHtml(verificationURL),
@@ -61,7 +61,7 @@ export const sendForgotPasswordEmail = async (
     const passwordReset = `${process.env.UI_URL}/forgot-password?token=${token}`;
 
     transporter.sendMail({
-      from: "dreamkitchenstores@gmail.com",
+      from: "nexafits@gmail.com",
       to: email,
       subject: "Reset password",
       html: passwordResetHtml(passwordReset),
@@ -79,7 +79,7 @@ export const emailVerificationHtml = (verificationUrl: string) => {
   <html>
   <head>
     <meta charset="UTF-8">
-    <title>Verify Your Email - Dream Kitchen Stores</title>
+    <title>Verify Your Email - NexaFit</title>
   </head>
   <body style="margin:0; padding:0; font-family: Arial, sans-serif; background-color:#f5f5f5; color:#333;">
   
@@ -147,7 +147,7 @@ export const passwordResetHtml= (resetUrl: string) => {
   <html>
   <head>
     <meta charset="UTF-8">
-    <title>Reset Your Password - Dream Kitchen Stores</title>
+    <title>Reset Your Password - NexaFit</title>
   </head>
   <body style="margin:0; padding:0; font-family: Arial, sans-serif; background-color:#f5f5f5; color:#333;">
   
